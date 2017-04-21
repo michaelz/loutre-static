@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+  <title>Loutre.ch</title>
+  <atom:link href="http://loutre.ch/feed/" rel="self" type="application/rss+xml" />
+  <link>http://loutre.ch</link>
+  <description>Le libre pour les fainéants</description>
+	<lastBuildDate>Fri, 21 Apr 2017 12:54:06 GMT</lastBuildDate>
+	<language>en</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+
+		<item>
+		<title>Organiser et optimiser les fichiers javascript d'une application Frontend avec npm et Browserify</title>
+      <link>http://loutre.ch/2016/08/organiser-et-optimiser-les-fichiers-javascript-dune-application-frontend-avec-npm-et</link>
+      <comments>http://loutre.ch/2016/08/organiser-et-optimiser-les-fichiers-javascript-dune-application-frontend-avec-npm-et/#comments</comments>
+      <pubDate>Fri, 21 Apr 2017 12:54:06 GMT</pubDate>
+      <dc:creator>Michaël Zwyssig</dc:creator>
+
+      <category><![CDATA[AngularJS]]></category>
+      <category><![CDATA[frontend]]></category>
+      <category><![CDATA[browserify]]></category>
+      <category><![CDATA[CommonJS]]></category>
+      <category><![CDATA[npm]]></category>
+      <category><![CDATA[javascript]]></category>
+
+      <guid isPermaLink="true">http://loutre.ch/2016/08/organiser-et-optimiser-les-fichiers-javascript-dune-application-frontend-avec-npm-et</guid>
+			<description><![CDATA[<p><img src="http://loutre.ch/sites/default/files/styles/9col__wide/public/img_3864.jpg?itok=mqi1KlkL" alt="photo hors contexte"></p>
+<blockquote>
+<p>Ayant eu à développer une application AngularJS dernièrement, je te propose une manière d&#39;organiser et de traiter le code de manière un peu plus efficace que de tout fourrer dans un seul et même fichier Javascript. Le début d&#39;un projet de développement web implique effectivement quelques réflexions préliminaires quant à l&#39;arborescence du code, s&#39;il y a lieu de mettre en place un task runner pour automatiser certaines procédures, quel outil de gestion des dépendances utiliser, etc.</p>
+</blockquote>
+<p>Cet article devra pouvoir te permettre, je l&#39;espère, de mettre en place une application frontend. C&#39;est pas vraiment un tutoriel à suivre, mais plutôt un article de compréhension générale parce que j&#39;ai l&#39;impression que c&#39;est ce genre d&#39;information qui manque sur le web. Ici, c&#39;est AngularJS qui sera utilisé mais en pratique tu peux utiliser d&#39;autres frameworks frontend.</p>
+<h2 id="introduction">Introduction</h2>
+<p>Contrairement à certains systèmes backend écrits en Java ou en PHP, la plupart des frameworks frontend ne te forcent pas à utiliser un cycle de développement prédéfini. Avec Laravel (PHP) par exemple, l&#39;arborescence est déjà établie (les contrôleurs ou les modèles par exemple ont leur dossier attribué) et on a des outils comme artisan et gulp qui permettent de gérer des tâches respectivement en backend et en frontend. Tu ne te poses pas de questions, il suffit de coder (et de bricoler quand la structure ne convient pas tout à fait).</p>
+<p>AngularJS, pour sa part, est écrit en Javascript. La philosophie de ce langage est un peu différente de celle d&#39;un language backend typique : en gros, on fait ce qu&#39;on veut. Ça implique évidemment des risques du grand n&#39;importe quoi, mais au final tu peux être trèèèès créatif, ce qui est plutôt cool pour faire des applications un peu innovantes. AngularJS est un framework qui propose des méchanismes très intéressants, mais pas de structure et d&#39;organisation de code. C&#39;est pour ça que tu trouveras, sur le web, une tonne d&#39;exemples et de tutos avec des applications qui ne font qu&#39;un fichier (app.js).</p>
+<p>Ce qu&#39;on va étudier dans cet article, c&#39;est la sortie de ce concept de mono-fichier pour pouvoir construire quelque chose de modulaire et de flexible. On utilisera la notation CommonJS avec Browserify, on lancera des scripts npm pour compiler et minifier des fichiers.</p>
+<h2 id="d-pendances-externes">Dépendances externes</h2>
+<p>sdf
+Dans mon cas, l&#39;installation de toutes les librairies s&#39;est faite avec npm. C&#39;est un gestionnaire de dépendances très populaire pour le développement backend avec nodeJS mais quasiment toutes les dépendances frontend sont également disponibles.</p>
+<h2 id="syst-me-modulaire">Système modulaire</h2>
+<p>Le réflexe qu&#39;on trouve dans la plupart des tutos lorsqu&#39;il s&#39;agit de structurer les fichiers sources d&#39;une application est de séparer les fonctions techniques (vues, contrôleurs, services, directives, etc.) dans des dossiers distincts. Ceci fonctionne bien lorsque l&#39;application est simple et qu&#39;elle ne propose que quelques fonctionnalités. Dès qu&#39;on dépasse cette étape, il devient judicieux de coder avec des modules &quot;métiers&quot;.</p>
+<p>Ci-dessous, la structure du code par fonction technique.</p>
+<pre><code>    app/
+         controllers/
+             mainController.js
+             otherController.js
+         directives/
+             mainDirective.js
+             otherDirective.js
+         services/
+             userService.js
+             itemService.js
+         app.js
+    views/
+         mainView.html
+         otherView.html
+         index.html
+    node_modules/
+</code></pre><p>C&#39;est effectivement pratique quand t&#39;as une petite application avec tout au plus trois ou quatre contrôleurs. Dès qu&#39;on commence à dépasser ce stade, tu t&#39;en sors plus dès qu&#39;il faut chercher, ajouter ou désactiver une fonctionnalité. On va donc réorganiser notre code comme ça:</p>
+<pre><code>angular-app/
+     modules/
+         core/
+             directive.js
+             routes.js
+             services.js
+             ...
+         admin/
+         apicall/
+         .../
+     app.js
+public/
+     assets/
+     views/
+     index.html
+theme/
+     sass/
+     theme.js
+node_modules/
+</code></pre><p>Comme tu peux le voir, on a deux aspects dans une application frontend: le fonctionnel et le visuel. Le code source de ces éléments est situé respectivement dans les dossiers <code>angular-app</code> et <code>theme</code>.</p>
+<h2 id="compilation-du-code">Compilation du code</h2>
+<p><strong>Ou comment éviter d&#39;avoir à charger moult fichiers dans le template html</strong></p>
+<p>L&#39;idée ici est de réutiliser les paradigmes de la programmation compilée. Bien que Javascript reste techniquement un langage interprété directement par le navigateur, on va <em>concaténer</em> puis <em>minifier</em> le code, on peut ainsi (par abus de langage certes) appeler cela de la compilation.</p>
+<h3 id="concat-nation-commonjs">Concaténation CommonJS</h3>
+<p>La concaténation consiste à ajouter bout à bout le contenu de plusieurs sources, que ce soit des chaînes ou des fichiers textes. Ce sont ces derniers qui vont être concaténés dans notre cas pour avoir au final qu&#39;un seul fichier <code>bundle.js</code> dans le dossier <code>public/</code>.</p>
+<p>Pour ce faire, on aurait la solution bête et facile d&#39;utiliser... <code>cat</code>, l&#39;utilitaire bash, avec <code>find</code> pour trouver les fichiers à traiter. Ça pourrait fonctionner mais on perd l&#39;aspect <em>modulaire</em> de l&#39;histoire. On va donc utiliser la notation CommonJS avec Browserify, afin de pouvoir coder comme dans NodeJS.</p>
+<p>On crée les modules CommonJS ainsi :</p>
+<pre><code class="lang-javascript">var module = { };
+// export du module
+module.exports = module;
+</code></pre>
+<p>et on les réutilise comme ça:</p>
+<pre><code class="lang-javascript">var module = require(&#39;./module&#39;);
+</code></pre>
+<p>Ca permet au final d&#39;avoir un fichier <code>app.js</code> qui appelle d&#39;autres fichiers, qui eux-mêmes en appellent d&#39;autres, etc. La modularité est là : tu veux désactiver un module, il suffit de commenter la ligne correspondante au chargement du module (le <code>require()</code>).</p>
+<p>Browserify est un utilitaire permettant de comprendre le concept CommonJS et de créer un seul fichier avec tous les appels intégrés, même ceux aux dépendances externes tels qu&#39;AngularJS.</p>
+<p>Lorsqu&#39;on utilise <code>require(&#39;./nomduDossier&#39;)</code>, c&#39;est le fichier <code>index.js</code> qui est recherché dans ce dossier. Tes modules peuvent donc tous avoir la même structure avec un fichier <code>index.js</code> qui est le point d&#39;entrée du module, pouvant faire appel à des directives ou à des contrôleurs par exemple.</p>
+<p>Un des avantages de Browserify est qu&#39;il ne charge les fichier requis par require() qu&#39;une seule fois même s&#39;il apparaît à plusieurs endroits différents dans le code.</p>
+<p>Voilà un exemple d&#39;un des fichiers <code>index.js</code> :</p>
+<pre><code class="lang-javascript">var dependencies = []; // liste des dépendances
+require(&#39;angular&#39;)
+    // Création d&#39;un module &#39;monmodule&#39; avec ses dépendances
+    .module(&#39;monmodule&#39;, dependencies)
+    // Ajout d&#39;une directive
+    .directive(&#39;moduleMyDirective&#39;, [require(&#39;./my.directive&#39;)]);
+</code></pre>
+<p>Il faudra donc créer un dossier s&#39;appelant <code>my.directive</code> avec un fichier <code>index.js</code>, ou alors directement un fichier <code>my.directive.js</code> (l&#39;extension n&#39;est pas obligatoire avec <code>require()</code>).</p>
+<h3 id="minification">Minification</h3>
+<p>Une fois passé dans la moulinette browserify, le code peut être relativement lourd. On peut enlever les espaces blancs et les retours à la ligne pour gagner un peu de place, mais il est également possible de le rendre illisible par l&#39;humain. <code>maBelleFonctionQuiAUnNomARallonge(parametre1, parametre2, parametre3)</code> peut simplement être traduit par <code>a(b,c,d)</code>, et c&#39;est là qu&#39;on gagne le plus d&#39;octets. C&#39;est le concept de l&#39;<em>uglify</em>. Le fichier minifié et uglifyié (oui...) pourra ainsi s&#39;appeler <code>bundle.min.js</code>.</p>
+<p>Pour débugger l&#39;application, vu que le code ne veut plus rien dire, tu peux passer des paramètres de <em>mapping</em> à l&#39;utilitaire de minification, afin d&#39;avoir un fichier bundle.map. Ce fichier map est utilisé par les navigateur pour accéder au code original, mais n&#39;est chargé que si c&#39;est nécessaire, donc pas pour les visiteurs du site.</p>
+<h2 id="rendre-ces-t-ches-automatiques-avec-npm-">Rendre ces tâches automatiques avec <code>npm</code></h2>
+<p>Pour éviter d&#39;effectuer ces différentes tâches à la main, deux logiciels principaux permettent leur automatisation : Grunt et Gulp. Ce sont les <em>Task Runners</em> les plus connus actuellement. Tu peux aussi utiliser npm, et ainsi, étant donné que ce dernier est déjà installé et qu&#39;il fait très bien le travail, on va utiliser l&#39;utiliser pour éviter l&#39;installation d&#39;autres dépendances.</p>
+<p>Ça fonctionne sous forme de scripts. On va donc créer ces derniers dans le fichier <code>package.json</code>, dans la section <code>scripts</code>:</p>
+<pre><code class="lang-javascript">&quot;scripts&quot;: {
+        &quot;build-js&quot;: &quot;browserify -t browserify-ngannotate angular-app/app.js   debug | exorcist public/assets/js/bundle.js.map &gt; public/assets/js/bundle.js&quot;,
+        &quot;build-min-js&quot;: &quot;browserify -t browserify-ngannotate angular-app/app.js -p [minifyify   no-map] &gt; public/assets/js/bundle.min.js&quot;,
+ },
+</code></pre>
+<p><code>exorcist</code> est utilitaire permettant de sortir le fichier map.js du fichier bundle.js, parce que le debug par défaut l&#39;inclut et ça fait un fichier final très lourd. Je me dépêche d&#39;écrire cet article parce que quelques mécanismes peuvent être améliorés avec Angular2 et on pourra en profiter pour en écrire un autre.</p>
+<p>Au final, on a un fichier de base dans le dossier <code>angular-app</code>, qui appelle d&#39;autres modules dans ce dossier et des dépendances externes. Ce fichier, grâce à Browserify, est concaténé dans un fichier bundle.js, qui lui-même est passé dans la machine de minification. Au final, on <em>exorcise</em> le fichier et en sortent un fichier <code>bundle.min.js</code> prêt à l&#39;emploi et un fichier <code>bundle.map</code>.</p>
+<h2 id="le-futur-est-brillant">Le futur est brillant</h2>
+<p>Angular2 apporte beaucoup de nouveautés en terme de performance et de fonctionnalités et est notamment compatible avec la nouvelle version de Javascript, ou plus justement d&#39;ECMAScript, mais demande un petit temps d&#39;adaptation pour le développeur. Angular2 permet également l&#39;utilisation de NativeScript, un système utilisé pour créer des <a href="https://www.smashingmagazine.com/2016/07/cross-platform-native-apps-single-code-set-telerik-nativescript/">applications mobiles Android et IOS natives</a>.</p>
+<p>Une des fonctionnalités très attendue par la communauté de développeurs dans la nouvelle version de la norme – nommée ES6 ou encore ES2015 – est le système de gestion de modules. Une syntaxe finale pour l&#39;import et l&#39;export de fonctionnalités entre les fichiers a été mise en place et il pourrait être intéressant d&#39;utiliser ce concept pour remplacer le système modulaire du couple CommonJS/Browserify. Ceci permettrait d&#39;optimiser grandement la minification du code grâce au concept de <a href="https://www.linkedin.com/pulse/forget-browserify-webpack-embrace-rollupjs-michel-ruffieux?trk=prof-post">Tree-Shaking</a> (on garde que les fonctionnalités utilisées) de la libraire <a href="http://rollupjs.org">rollup.js</a>. Il faudrait néanmoins revoir la manière d&#39;installer des dépendances externes.</p>
+<h1 id="punch-blog">Punch blog</h1>
+<p>Thanks for trying out Punch blog. You start writing editing this post itself. Just go to <code>posts/</code> directory and you will find a file named <code>1970-01-01-lets-start.markdown</code>. Rename it with today&#39;s date and your post title. Then open it, delete this post and start writing your own.</p>
+<p>Before we go any further, here&#39;s cute picture of a cat to cheer you up :)</p>
+<p><img src="/img/cat.jpg" alt="cat"></p>
+<p>At the top of this file, you will find a YAML front matter block (similar to <a href="https://github.com/mojombo/jekyll">Jekyll</a>). You can define any variable you want to use in templates. Punch will look for the following variables when generating the site - <code>title</code>, <code>published</code> and <code>tags</code>.</p>
+<p>You can set any blog specific settings under the section <code>blog</code> in the <code>config.json</code>. Default blog settings can be found <a href="https://github.com/laktek/punch-blog-content-handler">here</a>. Apart from the default settings, there are two custom settngs for this project, which define the number of posts (<code>homepage_posts</code>) and paragraphs (<code>teaser_length</code>) to show in homepage. Here are the default <code>blog</code> section from <code>config.json</code>.</p>
+<pre><code class="lang-javascript">    &quot;blog&quot;: {
+        &quot;posts_dir&quot;: &quot;posts&quot;,
+        &quot;post_format&quot;: &quot;markdown&quot;,    
+        &quot;post_url&quot;: &quot;/{year}/{month}/{date}/{title}&quot;,
+        &quot;teaser_length&quot;: 2,
+        &quot;homepage_posts&quot;: 10,
+
+        &quot;archive_urls&quot;: {
+            &quot;all&quot;: &quot;/archive&quot;,
+            &quot;year&quot;: &quot;/{year}&quot;,
+            &quot;year_month&quot;: &quot;/{year}/{month}&quot;,
+            &quot;year_month_date&quot;: &quot;/{year}/{month}/{date}&quot;,
+            &quot;tag&quot;: &quot;/tag/{tag}&quot;
+        }
+    }
+</code></pre>
+<p>Punch-blog uses <a href="http://prismjs.com/">Prism.js</a> for automatic syntax highlighting. There are several other nifty features like that on Punch-blog. Here&#39;s a full list: </p>
+<ul>
+<li>Preview posts, as you write them.</li>
+<li>Easily publish to Amazon S3.</li>
+<li>Pretty URLs for permalinks (no .html, configurable).</li>
+<li>Responsive, customizable theme based on <a href="html5boilerplate.com">HTML5Boilerplate</a> &amp; <a href="https://github.com/malarkey/320andup/">320andup framework</a>.</li>
+<li>Load fonts from multiple sources with <a href="https://github.com/typekit/webfontloader">WebFonts Loader</a>.</li>
+<li>Easily configure Google Analytics, Tweet button &amp; Disqus comments.</li>
+<li>Highlighting the current page link.</li>
+<li>Post archives by tags.</li>
+<li>Post archives by year, month or date.</li>
+<li>Write posts using GitHub flavored Markdown.</li>
+<li>Client-side code highlighting with Prism.js</li>
+<li>Published/draft states.</li>
+<li>Automatically minifies and bundles JavaScript/CSS.</li>
+<li>RSS feed </li>
+<li>Sitemap.xml</li>
+</ul>
+<p>Also, you can use any other features available in Punch.</p>
+<ul>
+<li>Manage other pages with Punch&#39;s default content handler.</li>
+<li>Extend the behavior by writing your own helpers.</li>
+</ul>
+<p>This is so sexy and awesome right? Yes, just like the Gangnam style:</p>
+<iframe width="560" height="315" src="http://www.youtube.com/embed/9bZkp7q19f0" frameborder="0" allowfullscreen></iframe> 
+
+
+<p>Happy Blogging!</p>
+]]></description>
+		</item>
+	</channel>
+</rss>
